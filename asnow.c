@@ -94,7 +94,7 @@ flake(int columns)
 int
 flake_is_blocked(Screen *scr, Snowflake *snow)
 {
-	if (snow->row == scr->rows)
+	if (snow->row == scr->rows - 1)
 		return 1;
 	if (get_from_screen(scr, snow->column, snow->row+1) != ' ')
 		return 1;
