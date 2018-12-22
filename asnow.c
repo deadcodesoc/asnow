@@ -12,6 +12,7 @@
 #include <string.h>
 #include <termios.h>
 #include <sys/ioctl.h>
+#include <sys/time.h>
 #include <time.h>
 #include <math.h>
 
@@ -137,12 +138,23 @@ melt_flakes(Screen *scr)
 				*p = MeltMap[i][1];
 }
 
+useconds_t
+now(void)
+{
+	struct timeval tval;
+	gettimeofday(&tval, NULL);
+	return tval.tv_sec * ONE_SECOND + tval.tv_usec;
+}
+
 int
 main(int argc, char *argv[])
 {
 	Screen *scr, *buf;
 	struct winsize ws;
 	int intensity = 5;	/* The number of simultaneous snowflakes */
+	useconds_t start;
+	useconds_t elapsed;
+	float frame_rate = 8.0;
 
 	ioctl(STDIN_FILENO, TIOCGWINSZ, &ws);
 	scr = new_screen(ws.ws_col, ws.ws_row);
@@ -160,6 +172,7 @@ main(int argc, char *argv[])
 	snow[i] = NULL;
 
 	for (;;) {
+		start = now();
 		copy_screen(buf, scr);
 		for (Snowflake **s = snow; *s; s++) {
 			if (flake_is_blocked(scr, *s)) {
@@ -185,7 +198,8 @@ main(int argc, char *argv[])
 		}
 		if (rand() % 1000 == 0)
 			melt_flakes(scr);
-		usleep(ONE_SECOND/8);
+		elapsed = now() - start;
+		usleep((ONE_SECOND-elapsed)/frame_rate);
 	}
 	return 0;
 }
