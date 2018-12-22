@@ -135,7 +135,7 @@ int
 flake_is_blocked(Screen *scr, Snowflake *snow)
 {
 	int row = (int)floorf(snow->row);
-  int column = (int)floorf(snow->column);
+	int column = (int)floorf(snow->column);
 	int speed = (int)ceilf(snow->speed);
 
 	/* Block if we're at the bottom of the screen */
@@ -146,14 +146,14 @@ flake_is_blocked(Screen *scr, Snowflake *snow)
 
 	for (int i = 1; i <= speed; i++) {
 		/* Block if we have an obstacle directly below us */
-		if (get_from_screen(scr, snow->column, row+i) != BLANK) {
+		if (get_from_screen(scr, column, row+i) != BLANK) {
 			snow->row += i - 1;
 			return 1;
 		}
 
 		/* If we have an obstacle in neighboring columns, maybe block */
-		if ((get_from_screen(scr, (snow->column-1) % scr->columns, row+i) | \
-		    get_from_screen(scr, (snow->column+1) % scr->columns, row+i)) != BLANK)
+		if ((get_from_screen(scr, (column-1) % scr->columns, row+i) | \
+		    get_from_screen(scr, (column+1) % scr->columns, row+i)) != BLANK)
 			return rand() % 2;
   }
   
@@ -179,26 +179,23 @@ now(void)
 }
 
 int
-main(int argc, char *argv[])
+snowfall(int w, int h, int intensity, char *msg)
 {
 	Screen *scr, *buf, *bg, *fg;
-	struct winsize ws;
-	int intensity = 5;	/* The number of simultaneous snowflakes */
 	useconds_t start;
 	useconds_t elapsed;
 	float frame_rate = 8.0;
 
-	ioctl(STDIN_FILENO, TIOCGWINSZ, &ws);
-	if ((scr = new_screen(ws.ws_col, ws.ws_row)) == NULL) {
+	if ((scr = new_screen(w, h)) == NULL) {
 		goto err;
 	}
-	if ((buf = new_screen(ws.ws_col, ws.ws_row)) == NULL) {
+	if ((buf = new_screen(w, h)) == NULL) {
 		goto err2;
 	}
-	if ((bg  = new_screen(ws.ws_col, ws.ws_row)) == NULL) {
+	if ((bg  = new_screen(w, h)) == NULL) {
 		goto err3;
 	}
-	if ((fg  = new_screen(ws.ws_col, ws.ws_row)) == NULL) {
+	if ((fg  = new_screen(w, h)) == NULL) {
 		goto err4;
 	}
 	fill_screen(scr, BLANK);
@@ -206,10 +203,9 @@ main(int argc, char *argv[])
 	fill_screen(bg,  BLANK);
 	fill_screen(fg,  BLANK);
 
-	if (argc > 1)
-		text_screen(bg, (ws.ws_col - strlen(argv[1]) ) / 2, ws.ws_row / 2, argv[1]);
-
-	srand(time(0));
+	if (msg != NULL) {
+		text_screen(bg, (w - strlen(msg)) / 2, h / 2, msg);
+	}
 
 	Snowflake *snow = malloc((intensity + 1) * sizeof(Snowflake));
         for (int i = 0; i < intensity; i++) {
@@ -256,5 +252,22 @@ main(int argc, char *argv[])
  err2:
 	free(scr);
  err:
-	return 1;
+	return -1;
+}
+
+int
+main(int argc, char *argv[])
+{
+	struct winsize ws;
+	int intensity = 5;	/* The number of simultaneous snowflakes */
+
+	srand(time(NULL));
+
+	ioctl(STDIN_FILENO, TIOCGWINSZ, &ws);
+
+	char *msg = argc > 1 ? argv[1] : NULL;
+	if (snowfall(ws.ws_col, ws.ws_row, intensity, msg) < 0) {
+		fprintf(stderr, "no snow forecast today.\n");
+		exit(EXIT_FAILURE);
+	}
 }
