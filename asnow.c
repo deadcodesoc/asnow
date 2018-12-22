@@ -16,8 +16,10 @@
 #include <time.h>
 #include <math.h>
 
-#define ONE_SECOND 1000000
-#define RANDF(x) ((float)rand()/((float)RAND_MAX/((float)x)))
+#define BLANK		' '
+#define ONE_SECOND	1000000
+#define RANDF(x)	((float)rand()/((float)RAND_MAX/((float)x)))
+#define NELEMS(x)	(sizeof(x)/sizeof((x)[0]))
 
 typedef struct {
 	char	*buffer;
@@ -99,7 +101,7 @@ Snowflake*
 flake(int columns)
 {
 	Snowflake *s = malloc(sizeof(Snowflake));
-	s->shape = SnowShape[rand() % 5];
+	s->shape = SnowShape[rand() % NELEMS(SnowShape)];
 	s->column = RANDF(columns);
 	s->row = 0.0f;
 	s->falling = 1;
@@ -120,10 +122,10 @@ flake_is_blocked(Screen *scr, Snowflake *snow)
 		snow->row = scr->rows - 1;
 		return 1;
 	}
-	if (get_from_screen(scr, column, row+1) != ' ')
+	if (get_from_screen(scr, column, row+1) != BLANK)
 		return 1;
 	if ((get_from_screen(scr, (column-1) % scr->columns, row+1) | \
-	    get_from_screen(scr, (column+1) % scr->columns, row+1)) != ' ')
+	    get_from_screen(scr, (column+1) % scr->columns, row+1)) != BLANK)
 		return rand() % 2;
 	return 0;
 }
@@ -133,7 +135,7 @@ melt_flakes(Screen *scr)
 {
 	char *max = scr->buffer + scr->size;
 	for (char *p = scr->buffer; p < max; p++)
-		for (int i = 0; i < 5; i++)
+		for (int i = 0; i < NELEMS(SnowShape); i++)
 			if (MeltMap[i][0] == *p)
 				*p = MeltMap[i][1];
 }
@@ -159,7 +161,7 @@ main(int argc, char *argv[])
 	ioctl(STDIN_FILENO, TIOCGWINSZ, &ws);
 	scr = new_screen(ws.ws_col, ws.ws_row);
 	buf = new_screen(ws.ws_col, ws.ws_row);
-	fill_screen(scr, ' ');
+	fill_screen(scr, BLANK);
 	if (argc > 1)
 		text_screen(scr, (ws.ws_col - strlen(argv[1]) ) / 2, ws.ws_row / 2, argv[1]);
 	srand(time(0));
