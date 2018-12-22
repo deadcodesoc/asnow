@@ -46,12 +46,23 @@ Screen *
 new_screen(int columns, int rows)
 {
 	int max = columns * rows;
-	Screen *s = malloc(sizeof(Screen));
-	s->buffer = malloc(sizeof(char) * max);
+	Screen *s;
+
+	if ((s = malloc(sizeof(Screen))) == NULL) {
+		goto err;
+	}
+	if ((s->buffer = malloc(sizeof(char) * max)) == NULL) {
+		goto err2;
+	}
 	s->columns = columns;
 	s->rows = rows;
 	s->size = max;
 	return s;
+
+ err2:
+	free(s);
+ err:
+	return NULL;
 }
 
 void
@@ -178,16 +189,26 @@ main(int argc, char *argv[])
 	float frame_rate = 8.0;
 
 	ioctl(STDIN_FILENO, TIOCGWINSZ, &ws);
-	scr = new_screen(ws.ws_col, ws.ws_row);
-	buf = new_screen(ws.ws_col, ws.ws_row);
-	bg  = new_screen(ws.ws_col, ws.ws_row);
-	fg  = new_screen(ws.ws_col, ws.ws_row);
+	if ((scr = new_screen(ws.ws_col, ws.ws_row)) == NULL) {
+		goto err;
+	}
+	if ((buf = new_screen(ws.ws_col, ws.ws_row)) == NULL) {
+		goto err2;
+	}
+	if ((bg  = new_screen(ws.ws_col, ws.ws_row)) == NULL) {
+		goto err3;
+	}
+	if ((fg  = new_screen(ws.ws_col, ws.ws_row)) == NULL) {
+		goto err4;
+	}
 	fill_screen(scr, BLANK);
 	fill_screen(buf, BLANK);
 	fill_screen(bg,  BLANK);
 	fill_screen(fg,  BLANK);
+
 	if (argc > 1)
 		text_screen(bg, (ws.ws_col - strlen(argv[1]) ) / 2, ws.ws_row / 2, argv[1]);
+
 	srand(time(0));
 
 	Snowflake *snow = malloc((intensity + 1) * sizeof(Snowflake));
@@ -227,4 +248,13 @@ main(int argc, char *argv[])
 		usleep((ONE_SECOND-elapsed)/frame_rate);
 	}
 	return 0;
+
+ err4:
+	free(bg);
+ err3:
+	free(buf);
+ err2:
+	free(scr);
+ err:
+	return 1;
 }
