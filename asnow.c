@@ -100,8 +100,10 @@ flake_is_blocked(Screen *scr, Snowflake *snow)
 {
 	int row = (int)floorf(snow->row);
 
-	if (row >= scr->rows - 1)
+	if (row >= scr->rows - 1) {
+		snow->row = scr->rows - 1;
 		return 1;
+	}
 	if (get_from_screen(scr, snow->column, row+1) != ' ')
 		return 1;
 	if ((get_from_screen(scr, (snow->column-1) % scr->columns, row+1) | \
@@ -115,26 +117,42 @@ main(int argc, char *argv[])
 {
 	Screen *scr, *buf;
 	struct winsize ws;
+	int intensity = 5;	/* The number of simultaneous snowflakes */
+
 	ioctl(STDIN_FILENO, TIOCGWINSZ, &ws);
 	scr = new_screen(ws.ws_col, ws.ws_row);
 	buf = new_screen(ws.ws_col, ws.ws_row);
 	fill_screen(scr, ' ');
 	srand(time(0));
-	Snowflake *snow = flake(scr->columns);
+
+	Snowflake **snow = malloc((intensity + 1) * sizeof(Snowflake *));
+        int i = 0;
+	while (i < intensity) {
+		snow[i++] = flake(scr->columns);
+	}
+	snow[i] = NULL;
+
 	for (;;) {
 		copy_screen(buf, scr);
-		put_in_screen(scr, snow->column, (int)floorf(snow->row), snow->shape);
-		if (flake_is_blocked(scr, snow)) {
-			copy_screen(buf, scr);
-			snow->falling = 0;
+		for (Snowflake **s = snow; *s; s++) {
+			if (flake_is_blocked(scr, *s)) {
+				put_in_screen(scr, (*s)->column, (int)floorf((*s)->row), (*s)->shape);
+				copy_screen(buf, scr);
+				(*s)->falling = 0;
+			}
+		}
+		for (Snowflake **s = snow; *s; s++) {
+			put_in_screen(scr, (*s)->column, (int)floorf((*s)->row), (*s)->shape);
 		}
 		draw_screen(scr);
 		copy_screen(scr, buf);
-		if (snow->falling)
-			snow->row += snow->speed;
-		else {
-			free(snow);
-			snow = flake(scr->columns);
+		for (Snowflake **s = snow; *s; s++) {
+			if ((*s)->falling)
+				(*s)->row += (*s)->speed;
+			else {
+				free(*s);
+				*s = flake(scr->columns);
+			}
 		}
 		usleep(ONE_SECOND/8);
 	}
