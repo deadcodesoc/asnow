@@ -27,10 +27,13 @@ typedef struct {
 
 typedef struct {
 	char	shape;
-	int	column;
+	float	column;
 	float	row;
 	int	falling;
-	float	speed;
+	float	speed;		/* falling speed */
+	float	phase;		/* wobble phase */
+	float	freq;		/* wobble frequency */
+	float	wobble;		/* wobble amount */
 } Snowflake;
 
 char SnowShape[] = {'.', '+', '*', 'x', 'X'};
@@ -96,10 +99,13 @@ flake(int columns)
 {
 	Snowflake *s = malloc(sizeof(Snowflake));
 	s->shape = SnowShape[rand() % 5];
-	s->column = rand() % columns;
+	s->column = RANDF(columns);
 	s->row = 0.0f;
 	s->falling = 1;
 	s->speed = 0.3f + RANDF(1.3f);
+	s->phase = RANDF(2.0f * M_PI);
+	s->freq = RANDF(0.2f);
+	s->wobble = RANDF(1.3f);
 	return s;
 }
 
@@ -107,15 +113,16 @@ int
 flake_is_blocked(Screen *scr, Snowflake *snow)
 {
 	int row = (int)floorf(snow->row);
+	int column = (int)floorf(snow->column);
 
 	if (row >= scr->rows - 1) {
 		snow->row = scr->rows - 1;
 		return 1;
 	}
-	if (get_from_screen(scr, snow->column, row+1) != ' ')
+	if (get_from_screen(scr, column, row+1) != ' ')
 		return 1;
-	if ((get_from_screen(scr, (snow->column-1) % scr->columns, row+1) | \
-	    get_from_screen(scr, (snow->column+1) % scr->columns, row+1)) != ' ')
+	if ((get_from_screen(scr, (column-1) % scr->columns, row+1) | \
+	    get_from_screen(scr, (column+1) % scr->columns, row+1)) != ' ')
 		return rand() % 2;
 	return 0;
 }
@@ -156,20 +163,22 @@ main(int argc, char *argv[])
 		copy_screen(buf, scr);
 		for (Snowflake **s = snow; *s; s++) {
 			if (flake_is_blocked(scr, *s)) {
-				put_in_screen(scr, (*s)->column, (int)floorf((*s)->row), (*s)->shape);
+				put_in_screen(scr, (int)floorf((*s)->column), (int)floorf((*s)->row), (*s)->shape);
 				copy_screen(buf, scr);
 				(*s)->falling = 0;
 			}
 		}
 		for (Snowflake **s = snow; *s; s++) {
-			put_in_screen(scr, (*s)->column, (int)floorf((*s)->row), (*s)->shape);
+			put_in_screen(scr, (int)floorf((*s)->column), (int)floorf((*s)->row), (*s)->shape);
 		}
 		draw_screen(scr);
 		copy_screen(scr, buf);
 		for (Snowflake **s = snow; *s; s++) {
-			if ((*s)->falling)
+			if ((*s)->falling) {
 				(*s)->row += (*s)->speed;
-			else {
+				(*s)->column += (*s)->wobble * sinf((*s)->phase);
+				(*s)->phase += (*s)->freq;
+			} else {
 				free(*s);
 				*s = flake(scr->columns);
 			}
