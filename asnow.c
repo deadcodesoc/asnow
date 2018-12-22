@@ -13,8 +13,10 @@
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <time.h>
+#include <math.h>
 
 #define ONE_SECOND 1000000
+#define RANDF(x) ((float)rand()/((float)RAND_MAX/((float)x)))
 
 typedef struct {
 	char	*buffer;
@@ -26,8 +28,9 @@ typedef struct {
 typedef struct {
 	char	shape;
 	int	column;
-	int	row;
+	float	row;
 	int	falling;
+	float	speed;
 } Snowflake;
 
 char SnowShape[] = {'.', '+', '*', 'x', 'X'};
@@ -94,20 +97,23 @@ flake(int columns)
 	Snowflake *s = malloc(sizeof(Snowflake));
 	s->shape = SnowShape[rand() % 5];
 	s->column = rand() % columns;
-	s->row = 0;
+	s->row = 0.0f;
 	s->falling = 1;
+	s->speed = 0.3f + RANDF(1.3f);
 	return s;
 }
 
 int
 flake_is_blocked(Screen *scr, Snowflake *snow)
 {
-	if (snow->row == scr->rows - 1)
+	int row = (int)floorf(snow->row);
+
+	if (row >= scr->rows - 1)
 		return 1;
-	if (get_from_screen(scr, snow->column, snow->row+1) != ' ')
+	if (get_from_screen(scr, snow->column, row+1) != ' ')
 		return 1;
-	if ((get_from_screen(scr, (snow->column-1) % scr->columns, snow->row+1) | \
-	    get_from_screen(scr, (snow->column+1) % scr->columns, snow->row+1)) != ' ')
+	if ((get_from_screen(scr, (snow->column-1) % scr->columns, row+1) | \
+	    get_from_screen(scr, (snow->column+1) % scr->columns, row+1)) != ' ')
 		return rand() % 2;
 	return 0;
 }
@@ -137,7 +143,7 @@ main(int argc, char *argv[])
 	Snowflake *snow = flake(scr->columns);
 	for (;;) {
 		copy_screen(buf, scr);
-		put_in_screen(scr, snow->column, snow->row, snow->shape);
+		put_in_screen(scr, snow->column, (int)floorf(snow->row), snow->shape);
 		if (flake_is_blocked(scr, snow)) {
 			copy_screen(buf, scr);
 			snow->falling = 0;
@@ -145,7 +151,7 @@ main(int argc, char *argv[])
 		draw_screen(scr);
 		copy_screen(scr, buf);
 		if (snow->falling)
-			snow->row = (snow->row + 1) % scr->rows;
+			snow->row += snow->speed;
 		else {
 			free(snow);
 			snow = flake(scr->columns);
