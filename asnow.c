@@ -154,7 +154,7 @@ flake_is_blocked(Screen *scr, Snowflake *snow, int column)
 		if ((get_from_screen(scr, (column-1) % scr->columns, row+i) | \
 		    get_from_screen(scr, (column+1) % scr->columns, row+i)) != BLANK)
 			return rand() % 2;
-  }
+	}
   
 	return 0;
 }
@@ -184,6 +184,7 @@ snowfall(int w, int h, int intensity, char *msg)
 	useconds_t start;
 	useconds_t elapsed;
 	float frame_rate = 8.0;
+	Snowflake *snow;
 
 	if ((scr = new_screen(w, h)) == NULL) {
 		goto err;
@@ -197,6 +198,10 @@ snowfall(int w, int h, int intensity, char *msg)
 	if ((fg  = new_screen(w, h)) == NULL) {
 		goto err4;
 	}
+	if ((snow = malloc((intensity + 1) * sizeof(Snowflake))) == NULL) {
+		goto err5;
+	}
+
 	fill_screen(scr, BLANK);
 	fill_screen(buf, BLANK);
 	fill_screen(bg,  BLANK);
@@ -206,7 +211,6 @@ snowfall(int w, int h, int intensity, char *msg)
 		text_screen(bg, (w - strlen(msg)) / 2, h / 2, msg);
 	}
 
-	Snowflake *snow = malloc((intensity + 1) * sizeof(Snowflake));
         for (int i = 0; i < intensity; i++) {
 		init_flake(&snow[i], scr->columns);
 	}
@@ -244,6 +248,8 @@ snowfall(int w, int h, int intensity, char *msg)
 	}
 	return 0;
 
+ err5:
+	free(fg);
  err4:
 	free(bg);
  err3:
