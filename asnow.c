@@ -88,6 +88,16 @@ copy_screen(Screen *dst, Screen *src)
 }
 
 void
+merge_screen(Screen *dst, Screen *src)
+{
+	char *max = dst->buffer + dst->size;
+	char *p, *q;
+	for (p=dst->buffer, q=src->buffer; p < max; p++, q++)
+		if (*q != BLANK)
+			*p = *q;
+}
+
+void
 draw_screen(Screen *scr)
 {
 	char *max = scr->buffer + scr->size;
@@ -151,7 +161,7 @@ now(void)
 int
 main(int argc, char *argv[])
 {
-	Screen *scr, *buf;
+	Screen *scr, *buf, *bg, *fg;
 	struct winsize ws;
 	int intensity = 5;	/* The number of simultaneous snowflakes */
 	useconds_t start;
@@ -161,9 +171,14 @@ main(int argc, char *argv[])
 	ioctl(STDIN_FILENO, TIOCGWINSZ, &ws);
 	scr = new_screen(ws.ws_col, ws.ws_row);
 	buf = new_screen(ws.ws_col, ws.ws_row);
+	bg  = new_screen(ws.ws_col, ws.ws_row);
+	fg  = new_screen(ws.ws_col, ws.ws_row);
 	fill_screen(scr, BLANK);
+	fill_screen(buf, BLANK);
+	fill_screen(bg,  BLANK);
+	fill_screen(fg,  BLANK);
 	if (argc > 1)
-		text_screen(scr, (ws.ws_col - strlen(argv[1]) ) / 2, ws.ws_row / 2, argv[1]);
+		text_screen(bg, (ws.ws_col - strlen(argv[1]) ) / 2, ws.ws_row / 2, argv[1]);
 	srand(time(0));
 
 	Snowflake **snow = malloc((intensity + 1) * sizeof(Snowflake *));
@@ -175,19 +190,15 @@ main(int argc, char *argv[])
 
 	for (;;) {
 		start = now();
-		copy_screen(buf, scr);
+		copy_screen(buf, fg);
 		for (Snowflake **s = snow; *s; s++) {
-			if (flake_is_blocked(scr, *s)) {
-				put_in_screen(scr, (int)floorf((*s)->column), (int)floorf((*s)->row), (*s)->shape);
-				copy_screen(buf, scr);
+			if (flake_is_blocked(bg, *s)) {
+				put_in_screen(bg, (int)floorf((*s)->column), (int)floorf((*s)->row), (*s)->shape);
 				(*s)->falling = 0;
 			}
+			if ((*s)->falling)
+				put_in_screen(fg, (int)floorf((*s)->column), (int)floorf((*s)->row), (*s)->shape);
 		}
-		for (Snowflake **s = snow; *s; s++) {
-			put_in_screen(scr, (int)floorf((*s)->column), (int)floorf((*s)->row), (*s)->shape);
-		}
-		draw_screen(scr);
-		copy_screen(scr, buf);
 		for (Snowflake **s = snow; *s; s++) {
 			if ((*s)->falling) {
 				(*s)->row += (*s)->speed;
@@ -199,7 +210,11 @@ main(int argc, char *argv[])
 			}
 		}
 		if (rand() % 1000 == 0)
-			melt_flakes(scr);
+			melt_flakes(bg);
+		copy_screen(scr, bg);
+		merge_screen(scr, fg);
+		copy_screen(fg, buf);
+		draw_screen(scr);
 		elapsed = now() - start;
 		usleep((ONE_SECOND-elapsed)/frame_rate);
 	}
