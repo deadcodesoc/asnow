@@ -34,6 +34,7 @@ typedef struct {
 } Snowflake;
 
 char SnowShape[] = {'.', '+', '*', 'x', 'X'};
+char *MeltMap[]  = {". ", "+.", "*+", "Xx", "x."};
 
 Screen *
 new_screen(int columns, int rows)
@@ -65,6 +66,13 @@ void
 fill_screen(Screen *scr, char ch)
 {
 	memset(scr->buffer, ch, scr->size);
+}
+
+void
+text_screen(Screen *scr, int col, int row, char *s)
+{
+	size_t pos = row * scr->columns + col;
+	memcpy(scr->buffer+pos, s, strlen(s));
 }
 
 void
@@ -112,6 +120,16 @@ flake_is_blocked(Screen *scr, Snowflake *snow)
 	return 0;
 }
 
+void
+melt_flakes(Screen *scr)
+{
+	char *max = scr->buffer + scr->size;
+	for (char *p = scr->buffer; p < max; p++)
+		for (int i = 0; i < 5; i++)
+			if (MeltMap[i][0] == *p)
+				*p = MeltMap[i][1];
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -123,6 +141,8 @@ main(int argc, char *argv[])
 	scr = new_screen(ws.ws_col, ws.ws_row);
 	buf = new_screen(ws.ws_col, ws.ws_row);
 	fill_screen(scr, ' ');
+	if (argc > 1)
+		text_screen(scr, (ws.ws_col - strlen(argv[1]) ) / 2, ws.ws_row / 2, argv[1]);
 	srand(time(0));
 
 	Snowflake **snow = malloc((intensity + 1) * sizeof(Snowflake *));
@@ -154,6 +174,8 @@ main(int argc, char *argv[])
 				*s = flake(scr->columns);
 			}
 		}
+		if (rand() % 1000 == 0)
+			melt_flakes(scr);
 		usleep(ONE_SECOND/8);
 	}
 	return 0;
