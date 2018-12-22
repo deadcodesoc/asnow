@@ -31,6 +31,7 @@ typedef struct {
 } Snowflake;
 
 char SnowShape[] = {'.', '+', '*', 'x', 'X'};
+char *MeltMap[]  = {". ", "+.", "*+", "Xx", "x."};
 
 Screen *
 new_screen(int columns, int rows)
@@ -111,6 +112,16 @@ flake_is_blocked(Screen *scr, Snowflake *snow)
 	return 0;
 }
 
+void
+melt_flakes(Screen *scr)
+{
+	char *max = scr->buffer + scr->size;
+	for (char *p = scr->buffer; p < max; p++)
+		for (int i = 0; i < 5; i++)
+			if (MeltMap[i][0] == *p)
+				*p = MeltMap[i][1];
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -139,6 +150,8 @@ main(int argc, char *argv[])
 			free(snow);
 			snow = flake(scr->columns);
 		}
+		if (rand() % 1000 == 0)
+			melt_flakes(scr);
 		usleep(ONE_SECOND/8);
 	}
 	return 0;
