@@ -107,10 +107,9 @@ draw_screen(Screen *scr)
 	fflush(stdout);
 }
 
-Snowflake*
-flake(int columns)
+void
+init_flake(Snowflake *s, int columns)
 {
-	Snowflake *s = malloc(sizeof(Snowflake));
 	s->shape = SnowShape[rand() % NELEMS(SnowShape)];
 	s->column = RANDF(columns);
 	s->row = 0.0f;
@@ -119,7 +118,6 @@ flake(int columns)
 	s->phase = RANDF(2.0f * M_PI);
 	s->freq = RANDF(0.2f);
 	s->wobble = RANDF(1.3f);
-	return s;
 }
 
 int
@@ -192,32 +190,31 @@ main(int argc, char *argv[])
 		text_screen(bg, (ws.ws_col - strlen(argv[1]) ) / 2, ws.ws_row / 2, argv[1]);
 	srand(time(0));
 
-	Snowflake **snow = malloc((intensity + 1) * sizeof(Snowflake *));
-        int i = 0;
-	while (i < intensity) {
-		snow[i++] = flake(scr->columns);
+	Snowflake *snow = malloc((intensity + 1) * sizeof(Snowflake));
+        for (int i = 0; i < intensity; i++) {
+		init_flake(&snow[i], scr->columns);
 	}
-	snow[i] = NULL;
 
 	for (;;) {
 		start = now();
 		copy_screen(buf, fg);
-		for (Snowflake **s = snow; *s; s++) {
-			if (flake_is_blocked(bg, *s)) {
-				put_in_screen(bg, (int)floorf((*s)->column), (int)floorf((*s)->row), (*s)->shape);
-				(*s)->falling = 0;
+		for (int i = 0; i < intensity; i++) {
+			Snowflake *s = &snow[i];
+			if (flake_is_blocked(bg, s)) {
+				put_in_screen(bg, (int)floorf(s->column), (int)floorf(s->row), s->shape);
+				s->falling = 0;
 			}
-			if ((*s)->falling)
-				put_in_screen(fg, (int)floorf((*s)->column), (int)floorf((*s)->row), (*s)->shape);
+			if (s->falling)
+				put_in_screen(fg, (int)floorf(s->column), (int)floorf(s->row), s->shape);
 		}
-		for (Snowflake **s = snow; *s; s++) {
-			if ((*s)->falling) {
-				(*s)->row += (*s)->speed;
-				(*s)->column += (*s)->wobble * sinf((*s)->phase);
-				(*s)->phase += (*s)->freq;
+		for (int i = 0; i < intensity; i++) {
+			Snowflake *s = &snow[i];
+			if (s->falling) {
+				s->row += s->speed;
+				s->column += s->wobble * sinf(s->phase);
+				s->phase += s->freq;
 			} else {
-				free(*s);
-				*s = flake(scr->columns);
+				init_flake(s, scr->columns);
 			}
 		}
 		if (rand() % 1000 == 0)
