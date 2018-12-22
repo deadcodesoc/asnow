@@ -1,7 +1,7 @@
 /*
- * asnow.c - Snowflakes in term (inspired by xsnow)
+ * (ASCII) Snowflakes in terminal (inspired by xsnow)
  *
- * Rudá Moura <ruda.moura@gmail.com>
+ * The asnow Authors
  * December, 2018. Public Domain
  *
  */
