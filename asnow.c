@@ -1,7 +1,7 @@
 /*
- * asnow.c - Snowflakes in term (inspired by xsnow)
+ * (ASCII) Snowflakes in terminal (inspired by xsnow)
  *
- * Rudá Moura <ruda.moura@gmail.com>
+ * The asnow Authors
  * December, 2018. Public Domain
  *
  */
@@ -12,11 +12,14 @@
 #include <string.h>
 #include <termios.h>
 #include <sys/ioctl.h>
+#include <sys/time.h>
 #include <time.h>
 #include <math.h>
 
-#define ONE_SECOND 1000000
-#define RANDF(x) ((float)rand()/((float)RAND_MAX/((float)x)))
+#define BLANK		' '
+#define ONE_SECOND	1000000
+#define RANDF(x)	((float)rand()/((float)RAND_MAX/((float)x)))
+#define NELEMS(x)	(sizeof(x)/sizeof((x)[0]))
 
 typedef struct {
 	char	*buffer;
@@ -27,10 +30,13 @@ typedef struct {
 
 typedef struct {
 	char	shape;
-	int	column;
+	float	column;
 	float	row;
 	int	falling;
-	float	speed;
+	float	speed;		/* falling speed */
+	float	phase;		/* wobble phase */
+	float	freq;		/* wobble frequency */
+	float	wobble;		/* wobble amount */
 } Snowflake;
 
 char SnowShape[] = {'.', '+', '*', 'x', 'X'};
@@ -82,6 +88,16 @@ copy_screen(Screen *dst, Screen *src)
 }
 
 void
+merge_screen(Screen *dst, Screen *src)
+{
+	char *max = dst->buffer + dst->size;
+	char *p, *q;
+	for (p=dst->buffer, q=src->buffer; p < max; p++, q++)
+		if (*q != BLANK)
+			*p = *q;
+}
+
+void
 draw_screen(Screen *scr)
 {
 	char *max = scr->buffer + scr->size;
@@ -95,11 +111,14 @@ Snowflake*
 flake(int columns)
 {
 	Snowflake *s = malloc(sizeof(Snowflake));
-	s->shape = SnowShape[rand() % 5];
-	s->column = rand() % columns;
+	s->shape = SnowShape[rand() % NELEMS(SnowShape)];
+	s->column = RANDF(columns);
 	s->row = 0.0f;
 	s->falling = 1;
 	s->speed = 0.3f + RANDF(1.3f);
+	s->phase = RANDF(2.0f * M_PI);
+	s->freq = RANDF(0.2f);
+	s->wobble = RANDF(1.3f);
 	return s;
 }
 
@@ -107,6 +126,7 @@ int
 flake_is_blocked(Screen *scr, Snowflake *snow)
 {
 	int row = (int)floorf(snow->row);
+  int column = (int)floorf(snow->column);
 	int speed = (int)ceilf(snow->speed);
 
 	/* Block if we're at the bottom of the screen */
@@ -117,17 +137,17 @@ flake_is_blocked(Screen *scr, Snowflake *snow)
 
 	for (int i = 1; i <= speed; i++) {
 		/* Block if we have an obstacle directly below us */
-		if (get_from_screen(scr, snow->column, row+i) != ' ') {
+		if (get_from_screen(scr, snow->column, row+i) != BLANK) {
 			snow->row += i - 1;
 			return 1;
 		}
 
 		/* If we have an obstacle in neighboring columns, maybe block */
 		if ((get_from_screen(scr, (snow->column-1) % scr->columns, row+i) | \
-		    get_from_screen(scr, (snow->column+1) % scr->columns, row+i)) != ' ')
+		    get_from_screen(scr, (snow->column+1) % scr->columns, row+i)) != BLANK)
 			return rand() % 2;
-        }
-
+  }
+  
 	return 0;
 }
 
@@ -136,24 +156,40 @@ melt_flakes(Screen *scr)
 {
 	char *max = scr->buffer + scr->size;
 	for (char *p = scr->buffer; p < max; p++)
-		for (int i = 0; i < 5; i++)
+		for (int i = 0; i < NELEMS(SnowShape); i++)
 			if (MeltMap[i][0] == *p)
 				*p = MeltMap[i][1];
+}
+
+useconds_t
+now(void)
+{
+	struct timeval tval;
+	gettimeofday(&tval, NULL);
+	return tval.tv_sec * ONE_SECOND + tval.tv_usec;
 }
 
 int
 main(int argc, char *argv[])
 {
-	Screen *scr, *buf;
+	Screen *scr, *buf, *bg, *fg;
 	struct winsize ws;
 	int intensity = 5;	/* The number of simultaneous snowflakes */
+	useconds_t start;
+	useconds_t elapsed;
+	float frame_rate = 8.0;
 
 	ioctl(STDIN_FILENO, TIOCGWINSZ, &ws);
 	scr = new_screen(ws.ws_col, ws.ws_row);
 	buf = new_screen(ws.ws_col, ws.ws_row);
-	fill_screen(scr, ' ');
+	bg  = new_screen(ws.ws_col, ws.ws_row);
+	fg  = new_screen(ws.ws_col, ws.ws_row);
+	fill_screen(scr, BLANK);
+	fill_screen(buf, BLANK);
+	fill_screen(bg,  BLANK);
+	fill_screen(fg,  BLANK);
 	if (argc > 1)
-		text_screen(scr, (ws.ws_col - strlen(argv[1]) ) / 2, ws.ws_row / 2, argv[1]);
+		text_screen(bg, (ws.ws_col - strlen(argv[1]) ) / 2, ws.ws_row / 2, argv[1]);
 	srand(time(0));
 
 	Snowflake **snow = malloc((intensity + 1) * sizeof(Snowflake *));
@@ -164,30 +200,34 @@ main(int argc, char *argv[])
 	snow[i] = NULL;
 
 	for (;;) {
-		copy_screen(buf, scr);
+		start = now();
+		copy_screen(buf, fg);
 		for (Snowflake **s = snow; *s; s++) {
-			if (flake_is_blocked(scr, *s)) {
-				put_in_screen(scr, (*s)->column, (int)floorf((*s)->row), (*s)->shape);
-				copy_screen(buf, scr);
+			if (flake_is_blocked(bg, *s)) {
+				put_in_screen(bg, (int)floorf((*s)->column), (int)floorf((*s)->row), (*s)->shape);
 				(*s)->falling = 0;
 			}
-		}
-		for (Snowflake **s = snow; *s; s++) {
-			put_in_screen(scr, (*s)->column, (int)floorf((*s)->row), (*s)->shape);
-		}
-		draw_screen(scr);
-		copy_screen(scr, buf);
-		for (Snowflake **s = snow; *s; s++) {
 			if ((*s)->falling)
+				put_in_screen(fg, (int)floorf((*s)->column), (int)floorf((*s)->row), (*s)->shape);
+		}
+		for (Snowflake **s = snow; *s; s++) {
+			if ((*s)->falling) {
 				(*s)->row += (*s)->speed;
-			else {
+				(*s)->column += (*s)->wobble * sinf((*s)->phase);
+				(*s)->phase += (*s)->freq;
+			} else {
 				free(*s);
 				*s = flake(scr->columns);
 			}
 		}
 		if (rand() % 1000 == 0)
-			melt_flakes(scr);
-		usleep(ONE_SECOND/8);
+			melt_flakes(bg);
+		copy_screen(scr, bg);
+		merge_screen(scr, fg);
+		copy_screen(fg, buf);
+		draw_screen(scr);
+		elapsed = now() - start;
+		usleep((ONE_SECOND-elapsed)/frame_rate);
 	}
 	return 0;
 }
