@@ -65,6 +65,13 @@ fill_screen(Screen *scr, char ch)
 }
 
 void
+text_screen(Screen *scr, int col, int row, char *s)
+{
+	size_t pos = row * scr->columns + col;
+	memcpy(scr->buffer+pos, s, strlen(s));
+}
+
+void
 copy_screen(Screen *dst, Screen *src)
 {
 	memcpy(dst->buffer, src->buffer, src->size);
@@ -113,6 +120,8 @@ main(int argc, char *argv[])
 	scr = new_screen(ws.ws_col, ws.ws_row);
 	buf = new_screen(ws.ws_col, ws.ws_row);
 	fill_screen(scr, ' ');
+	if (argc > 1)
+		text_screen(scr, (ws.ws_col - strlen(argv[1]) ) / 2, ws.ws_row / 2, argv[1]);
 	srand(time(0));
 	Snowflake *snow = flake(scr->columns);
 	for (;;) {
