@@ -125,17 +125,16 @@ init_flake(Snowflake *s, int columns)
 	s->column = RANDF(columns);
 	s->row = 0.0f;
 	s->falling = 1;
-	s->speed = 0.3f + RANDF(1.3f);
+	s->speed = 0.3f + RANDF(1.2f);
 	s->phase = RANDF(2.0f * M_PI);
 	s->freq = RANDF(0.2f);
-	s->wobble = RANDF(1.3f);
+	s->wobble = 0.5f + RANDF(3.5f);
 }
 
 int
-flake_is_blocked(Screen *scr, Snowflake *snow)
+flake_is_blocked(Screen *scr, Snowflake *snow, int column)
 {
 	int row = (int)floorf(snow->row);
-	int column = (int)floorf(snow->column);
 	int speed = (int)ceilf(snow->speed);
 
 	/* Block if we're at the bottom of the screen */
@@ -217,18 +216,18 @@ snowfall(int w, int h, int intensity, char *msg)
 		copy_screen(buf, fg);
 		for (int i = 0; i < intensity; i++) {
 			Snowflake *s = &snow[i];
-			if (flake_is_blocked(bg, s)) {
-				put_in_screen(bg, (int)floorf(s->column), (int)floorf(s->row), s->shape);
+			int column = (int)floorf(s->column + s->wobble * sinf(s->phase));
+			if (flake_is_blocked(bg, s, column)) {
+				put_in_screen(bg, column, (int)floorf(s->row), s->shape);
 				s->falling = 0;
 			}
 			if (s->falling)
-				put_in_screen(fg, (int)floorf(s->column), (int)floorf(s->row), s->shape);
+				put_in_screen(fg, column, (int)floorf(s->row), s->shape);
 		}
 		for (int i = 0; i < intensity; i++) {
 			Snowflake *s = &snow[i];
 			if (s->falling) {
 				s->row += s->speed;
-				s->column += s->wobble * sinf(s->phase);
 				s->phase += s->freq;
 			} else {
 				init_flake(s, scr->columns);
