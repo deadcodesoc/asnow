@@ -1,7 +1,17 @@
+CC      = gcc
+CFLAGS  = -Wall -O2
+LD      = gcc
+LDFLAGS =
+LIBS    = -lm
+OBJS    = asnow.o
+
+.c.o:
+	$(CC) -c $(CFLAGS) -o $*.o $<
+
 all: asnow
 
-asnow: asnow.o
-	$(CC) $(LDFLAGS) -o $@ $+ -lm
+asnow: $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
 clean:
 	rm -f *~ *.o asnow
