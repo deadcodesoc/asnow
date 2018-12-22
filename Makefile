@@ -16,4 +16,8 @@ asnow: $(OBJS)
 clean:
 	rm -f *~ *.o asnow
 
+asnow.man: asnow.6
+	preconv $+ | nroff -man > $@
+	
+
 .PHONY: clean
