@@ -126,17 +126,28 @@ int
 flake_is_blocked(Screen *scr, Snowflake *snow)
 {
 	int row = (int)floorf(snow->row);
-	int column = (int)floorf(snow->column);
+  int column = (int)floorf(snow->column);
+	int speed = (int)ceilf(snow->speed);
 
+	/* Block if we're at the bottom of the screen */
 	if (row >= scr->rows - 1) {
 		snow->row = scr->rows - 1;
 		return 1;
 	}
-	if (get_from_screen(scr, column, row+1) != BLANK)
-		return 1;
-	if ((get_from_screen(scr, (column-1) % scr->columns, row+1) | \
-	    get_from_screen(scr, (column+1) % scr->columns, row+1)) != BLANK)
-		return rand() % 2;
+
+	for (int i = 1; i <= speed; i++) {
+		/* Block if we have an obstacle directly below us */
+		if (get_from_screen(scr, snow->column, row+i) != BLANK) {
+			snow->row += i - 1;
+			return 1;
+		}
+
+		/* If we have an obstacle in neighboring columns, maybe block */
+		if ((get_from_screen(scr, (snow->column-1) % scr->columns, row+i) | \
+		    get_from_screen(scr, (snow->column+1) % scr->columns, row+i)) != BLANK)
+			return rand() % 2;
+  }
+  
 	return 0;
 }
 
