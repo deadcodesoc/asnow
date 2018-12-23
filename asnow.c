@@ -99,7 +99,7 @@ copy_frame(Frame *dst, Frame *src)
 }
 
 void
-merge_screen(Frame *dst, Frame *src)
+merge_frame(Frame *dst, Frame *src)
 {
 	char *max = dst->buffer + dst->size;
 	char *p, *q;
@@ -109,7 +109,7 @@ merge_screen(Frame *dst, Frame *src)
 }
 
 void
-draw_screen(Frame *frm)
+draw_frame(Frame *frm)
 {
 	char *max = frm->buffer + frm->size;
 	for (char *p = frm->buffer; p < max; p++)
@@ -137,7 +137,7 @@ flake_is_blocked(Frame *frm, Snowflake *snow, int column)
 	int row = (int)floorf(snow->row);
 	int speed = (int)ceilf(snow->speed);
 
-	/* Block if we're at the bottom of the screen */
+	/* Block if we're at the bottom of the frame */
 	if (row >= frm->rows - 1) {
 		snow->row = frm->rows - 1;
 		return 1;
@@ -162,7 +162,7 @@ flake_is_blocked(Frame *frm, Snowflake *snow, int column)
 int
 flake_is_blocker(Frame *frm, Snowflake *snow)
 {
-	/* Not a blocker if we're at the top of the screen */
+	/* Not a blocker if we're at the top of the frame */
 	if (snow->row == 0)
 		return 0;
 
@@ -273,9 +273,9 @@ snowfall(int w, int h, int intensity, char *msg)
 		if (rand() % melt_threshold == 0)
 			melt_flakes(bg);
 		copy_frame(scr, bg);
-		merge_screen(scr, fg);
+		merge_frame(scr, fg);
 		copy_frame(fg, buf);
-		draw_screen(scr);
+		draw_frame(scr);
 		elapsed = now() - start;
 		usleep((ONE_SECOND-elapsed)/frame_rate);
 	}
