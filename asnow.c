@@ -159,14 +159,45 @@ flake_is_blocked(Screen *scr, Snowflake *snow, int column)
 	return 0;
 }
 
+int
+flake_is_blocker(Screen *scr, Snowflake *snow)
+{
+	/* Not a blocker if we're at the top of the screen */
+	if (snow->row == 0)
+		return 0;
+
+	/* Blocker if we have objects directly above us */
+	if (get_from_screen(scr, snow->column, snow->row-1) != BLANK)
+		return 1;
+	if ((snow->column > 0 && snow->column < scr->columns-1) && \
+	     (get_from_screen(scr, snow->column-1, snow->row-1) | \
+	      get_from_screen(scr, snow->column+1, snow->row-1)) != BLANK)
+		return 1;
+
+	return 0;
+}
+
 void
 melt_flakes(Screen *scr)
 {
 	char *max = scr->buffer + scr->size;
-	for (char *p = scr->buffer; p < max; p++)
-		for (int i = 0; i < NELEMS(SnowShape); i++)
-			if (MeltMap[i][0] == *p)
+	size_t pos = 0;
+	Snowflake snow;
+	for (char *p = scr->buffer; p < max; p++, pos++) {
+		if (*p == BLANK) {
+			continue;
+		}
+		snow.column = pos % scr->columns;
+		snow.row    = pos / scr->columns;
+		if (flake_is_blocker(scr, &snow)) {
+			continue;
+		}
+		for (int i = 0; i < NELEMS(SnowShape); i++) {
+			if (MeltMap[i][0] == *p) {
 				*p = MeltMap[i][1];
+			}
+		}
+	}
 }
 
 useconds_t
@@ -215,6 +246,8 @@ snowfall(int w, int h, int intensity, char *msg)
 		init_flake(&snow[i], scr->columns);
 	}
 
+	int melt_threshold = (scr->columns * scr->rows) / 7;
+
 	for (;;) {
 		start = now();
 		copy_screen(buf, fg);
@@ -237,7 +270,7 @@ snowfall(int w, int h, int intensity, char *msg)
 				init_flake(s, scr->columns);
 			}
 		}
-		if (rand() % 1000 == 0)
+		if (rand() % melt_threshold == 0)
 			melt_flakes(bg);
 		copy_screen(scr, bg);
 		merge_screen(scr, fg);
