@@ -1,3 +1,6 @@
+#ifndef ASNOW_H_
+#define ASNOW_H_
+
 /*
  * (ASCII) Snowflakes in terminal (inspired by xsnow)
  *
@@ -59,3 +62,5 @@ int        flake_is_blocker(Frame *frm, Snowflake *snow);
 void       melt_flakes(Frame *frm);
 useconds_t now(void);
 int        snowfall(int w, int h, int intensity, char *msg);
+
+#endif  /* ASNOW_H_ */
