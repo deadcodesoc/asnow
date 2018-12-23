@@ -250,15 +250,13 @@ snowfall(int w, int h, int intensity, char *msg)
 			Snowflake *s = &snow[i];
 			int column = (int)floorf(s->column + s->wobble * sinf(s->phase));
 			if (flake_is_blocked(bg, s, column)) {
-				put_on_frame(bg, column, (int)floorf(s->row), s->shape);
 				s->falling = 0;
+				if (s->row != 0) {
+					put_on_frame(bg, column, (int)floorf(s->row), s->shape);
+				}
 			}
-			if (s->falling)
-				put_on_frame(fg, column, (int)floorf(s->row), s->shape);
-		}
-		for (int i = 0; i < intensity; i++) {
-			Snowflake *s = &snow[i];
 			if (s->falling) {
+				put_on_frame(fg, column, (int)floorf(s->row), s->shape);
 				s->row += s->speed;
 				s->phase += s->freq;
 			} else {
