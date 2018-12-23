@@ -20,6 +20,8 @@
 #define ONE_SECOND	1000000
 #define RANDF(x)	((float)rand()/((float)RAND_MAX/((float)x)))
 #define NELEMS(x)	(sizeof(x)/sizeof((x)[0]))
+#define MIN(x,y)	((x)<(y)?(x):(y))
+#define MAX(x,y)	((x)>(y)?(x):(y))
 
 typedef struct {
 	char	*buffer;
@@ -47,6 +49,7 @@ void       put_on_frame(Frame *frm, int col, int row, char ch);
 int        get_from_frame(Frame *frm, int col, int row);
 void       fill_frame(Frame *frm, char ch);
 void       text_on_frame(Frame *frm, int col, int row, char *s);
+void       stamp_on_frame(Frame *frm, int col, int row, char *stamp[], int rows);
 void       copy_frame(Frame *dst, Frame *src);
 void       merge_frame(Frame *dst, Frame *src);
 void       draw_frame(Frame *frm);
