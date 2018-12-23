@@ -60,11 +60,11 @@ text_on_frame(Frame *frm, int col, int row, char *s)
 }
 
 void
-stamp_on_frame(Frame *frm, int col, int row, char *stamp[], int rows)
+stamp_on_frame(Frame *frm, int col, int row, char *stamp[], int cols, int rows)
 {
 	size_t pos = row * frm->columns + col;
 	for (int i = 0; i < rows && i+row < frm->rows; pos += frm->columns, i++) {
-		size_t len = MIN(strlen(stamp[i]),frm->columns-col);
+		size_t len = MIN(cols,frm->columns-col);
 		memcpy(frm->buffer+pos, stamp[i], len);
 	}
 }
@@ -219,7 +219,7 @@ snowfall(int w, int h, int intensity, char *msg)
 	for (int i=0; i < 3; i++) {
 		int col = rand() % (bg->columns-strlen(stamp_small_tree[0]));
 		int row = rand() % (bg->rows-NELEMS(stamp_small_tree));
-		stamp_on_frame(bg, col, row, stamp_small_tree, NELEMS(stamp_small_tree));
+		stamp_on_frame(bg, col, row, stamp_small_tree, strlen(stamp_small_tree[0]), NELEMS(stamp_small_tree));
 	}
 
 	if (msg != NULL) {
