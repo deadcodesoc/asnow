@@ -22,6 +22,6 @@ clean:
 asnow.man: asnow.6
 	preconv $+ | nroff -man > $@
 	
-asnow.o: asnow.c asnow.h stamp.h
+asnow.o: asnow.c asnow.h stamp.h Makefile
 
 .PHONY: clean

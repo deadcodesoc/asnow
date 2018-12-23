@@ -6,7 +6,18 @@
  *
  */
 
+
 #include "asnow.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <termios.h>
+#include <sys/ioctl.h>
+#include <sys/time.h>
+#include <time.h>
+#include <math.h>
+#include <errno.h>
 #include "stamp.h"
 
 Frame *
@@ -285,11 +296,16 @@ main(int argc, char *argv[])
 
 	srand(time(NULL));
 
-	ioctl(STDIN_FILENO, TIOCGWINSZ, &ws);
+	if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) < 0) {
+		perror(argv[0]);
+		exit(EXIT_FAILURE);
+	}
 
 	char *msg = argc > 1 ? argv[1] : NULL;
 	if (snowfall(ws.ws_col, ws.ws_row, intensity, msg) < 0) {
 		fprintf(stderr, "no snow forecast today.\n");
 		exit(EXIT_FAILURE);
 	}
+
+	fprintf(stderr, "you shouldn't see this message\n");
 }
