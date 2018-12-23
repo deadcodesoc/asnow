@@ -86,7 +86,7 @@ fill_frame(Frame *frm, char ch)
 }
 
 void
-text_screen(Frame *frm, int col, int row, char *s)
+text_on_frame(Frame *frm, int col, int row, char *s)
 {
 	size_t pos = row * frm->columns + col;
 	memcpy(frm->buffer+pos, s, strlen(s));
@@ -239,7 +239,7 @@ snowfall(int w, int h, int intensity, char *msg)
 	fill_frame(fg,  BLANK);
 
 	if (msg != NULL) {
-		text_screen(bg, (w - strlen(msg)) / 2, h / 2, msg);
+		text_on_frame(bg, (w - strlen(msg)) / 2, h / 2, msg);
 	}
 
         for (int i = 0; i < intensity; i++) {
