@@ -10,7 +10,7 @@ OBJS    = asnow.o
 
 all: asnow
 
-asnow: $(OBJS) asnow.h
+asnow: $(OBJS) asnow.h stamp.h
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
 clean:

@@ -7,6 +7,7 @@
  */
 
 #include "asnow.h"
+#include "stamp.h"
 
 Frame *
 new_frame(int columns, int rows)
@@ -59,6 +60,16 @@ text_on_frame(Frame *frm, int col, int row, char *s)
 }
 
 void
+stamp_on_frame(Frame *frm, int col, int row, char *stamp[], int rows)
+{
+	size_t pos = row * frm->columns + col;
+	for (int i = 0; i < rows && i+row < frm->rows; pos += frm->columns, i++) {
+		size_t len = MIN(strlen(stamp[i]),frm->columns-col);
+		memcpy(frm->buffer+pos, stamp[i], len);
+	}
+}
+
+void
 copy_frame(Frame *dst, Frame *src)
 {
 	memcpy(dst->buffer, src->buffer, src->size);
@@ -73,6 +84,7 @@ merge_frame(Frame *dst, Frame *src)
 		if (*q != BLANK)
 			*p = *q;
 }
+
 
 void
 draw_frame(Frame *frm)
@@ -203,6 +215,12 @@ snowfall(int w, int h, int intensity, char *msg)
 	fill_frame(buf, BLANK);
 	fill_frame(bg,  BLANK);
 	fill_frame(fg,  BLANK);
+
+	for (int i=0; i < 3; i++) {
+		int col = rand() % (bg->columns-strlen(stamp_small_tree[0]));
+		int row = rand() % (bg->rows-NELEMS(stamp_small_tree));
+		stamp_on_frame(bg, col, row, stamp_small_tree, NELEMS(stamp_small_tree));
+	}
 
 	if (msg != NULL) {
 		text_on_frame(bg, (w - strlen(msg)) / 2, h / 2, msg);
