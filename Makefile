@@ -10,8 +10,11 @@ OBJS    = asnow.o
 
 all: asnow
 
-asnow: $(OBJS) asnow.h stamp.h
-	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+asnow: $(OBJS)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+
+asnow-static: $(OBJS)
+	$(LD) $(LDFLAGS) -static -o $@ $(OBJS) $(LIBS)
 
 clean:
 	rm -f *~ *.o asnow
@@ -19,5 +22,6 @@ clean:
 asnow.man: asnow.6
 	preconv $+ | nroff -man > $@
 	
+asnow.o: asnow.c asnow.h stamp.h
 
 .PHONY: clean
