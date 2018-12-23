@@ -46,21 +46,21 @@ Frame *
 new_frame(int columns, int rows)
 {
 	int max = columns * rows;
-	Frame *s;
+	Frame *frm;
 
-	if ((s = malloc(sizeof(Frame))) == NULL) {
+	if ((frm = malloc(sizeof(Frame))) == NULL) {
 		goto err;
 	}
-	if ((s->buffer = malloc(sizeof(char) * max)) == NULL) {
+	if ((frm->buffer = malloc(sizeof(char) * max)) == NULL) {
 		goto err2;
 	}
-	s->columns = columns;
-	s->rows = rows;
-	s->size = max;
-	return s;
+	frm->columns = columns;
+	frm->rows    = rows;
+	frm->size    = max;
+	return frm;
 
  err2:
-	free(s);
+	free(frm);
  err:
 	return NULL;
 }
