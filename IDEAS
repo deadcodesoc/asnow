@@ -31,6 +31,9 @@
   - Geolocation from IP
     - Then we can use location for forecast
     - Also with latitude we can get season
+  - Or, let the user specify a place, get weather data from this place,
+    and render the snow to simulate the real conditions there! E.g.
+    Hawaii -> no snow at all.
   - Snow as a service provides network access to the snowfall
   - Docker container
   - Snap package
@@ -41,4 +44,6 @@
 
 - Code layout
   - Move terminal handling to a separate module
+  - Add regression tests
+  - Add travis integration
 
