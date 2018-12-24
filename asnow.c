@@ -108,7 +108,7 @@ snowfall(int w, int h, int intensity, char *msg)
 	useconds_t start;
 	useconds_t elapsed;
 	float frame_rate = 8.0;
-	Snowflake *snow;
+	Snow *snow;
 
 	if ((scr = new_frame(w, h)) == NULL) {
 		goto err;
@@ -122,7 +122,7 @@ snowfall(int w, int h, int intensity, char *msg)
 	if ((fg  = new_frame(w, h)) == NULL) {
 		goto err4;
 	}
-	if ((snow = malloc((intensity + 1) * sizeof(Snowflake))) == NULL) {
+	if ((snow = snow_start(intensity, scr->columns)) == NULL) {
 		goto err5;
 	}
 
@@ -143,17 +143,13 @@ snowfall(int w, int h, int intensity, char *msg)
 		text_on_frame(bg, (w - strlen(msg)) / 2, h / 2, msg);
 	}
 
-        for (int i = 0; i < intensity; i++) {
-		flake_init(&snow[i], scr->columns);
-	}
-
 	int melt_threshold = (scr->columns * scr->rows) / 7;
 
 	for (;;) {
 		start = now();
 		copy_frame(buf, fg);
 		for (int i = 0; i < intensity; i++) {
-			Snowflake *s = &snow[i];
+			Snowflake *s = &snow->flake[i];
 			int column = (int)floorf(s->column + s->wobble * sinf(s->phase));
 			if (flake_is_blocked(bg, s, column)) {
 				s->falling = 0;

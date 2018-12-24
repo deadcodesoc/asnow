@@ -19,3 +19,26 @@ flake_init(Snowflake *s, int columns)
 	s->wobble = 0.5f + RANDF(3.5f);
 }
 
+Snow *
+snow_start(const int intensity, const int columns)
+{
+	Snow *snow = (Snow *)malloc(sizeof (Snow));
+	snow->flake = (Snowflake *)malloc(MAX_SNOW * sizeof(Snowflake));
+	snow->size = MAX_SNOW;
+	snow->used = intensity;
+
+	for (int i = 0; i < snow->used; i++) {
+		flake_init(&snow->flake[i], columns);
+	}
+
+	return snow;
+}
+
+void
+snow_end(Snow *snow)
+{
+	free(snow->flake);
+	snow->size = 0;
+	snow->used = 0;
+}
+
