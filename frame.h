@@ -1,5 +1,5 @@
-#ifndef FRAME_H_
-#define FRAME_H_
+#ifndef ASNOW_FRAME_H_
+#define ASNOW_FRAME_H_
 
 /*
  * (ASCII) Snowflakes in terminal (inspired by xsnow)
@@ -32,4 +32,4 @@ void       copy_frame(Frame *dst, Frame *src);
 void       merge_frame(Frame *dst, Frame *src);
 void       draw_frame(Frame *frm);
 
-#endif  /* FRAME_H_ */
+#endif  /* ASNOW_FRAME_H_ */

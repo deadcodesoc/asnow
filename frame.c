@@ -6,19 +6,10 @@
  *
  */
 
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <termios.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
-#include <time.h>
-#include <math.h>
-#include <errno.h>
 #include "frame.h"
-#include "stamp.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 Frame *
 new_frame(int columns, int rows)
