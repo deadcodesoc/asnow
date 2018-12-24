@@ -1,6 +1,6 @@
-CC      = gcc
+CC      = cc
 CFLAGS  = -Wall -O2
-LD      = gcc
+LD      = cc
 LDFLAGS =
 LIBS    = -lm
 OBJS    = asnow.o frame.o
