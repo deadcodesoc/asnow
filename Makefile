@@ -3,7 +3,7 @@ CFLAGS  = -Wall -O2
 LD      = gcc
 LDFLAGS =
 LIBS    = -lm
-OBJS    = asnow.o
+OBJS    = asnow.o frame.o
 
 .c.o:
 	$(CC) -c $(CFLAGS) -o $*.o $<
