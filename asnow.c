@@ -21,18 +21,8 @@
 #include "stamp.h"
 
 
-void
-init_flake(Snowflake *s, int columns)
-{
-	s->shape = SnowShape[rand() % NELEMS(SnowShape)];
-	s->column = RANDF(columns);
-	s->row = 0.0f;
-	s->falling = 1;
-	s->speed = 0.3f + RANDF(1.2f);
-	s->phase = RANDF(2.0f * M_PI);
-	s->freq = RANDF(0.2f);
-	s->wobble = 0.5f + RANDF(3.5f);
-}
+char *MeltMap[]  = {". ", "+.", "*+", "Xx", "x."};
+
 
 int
 flake_is_blocked(Frame *frm, Snowflake *snow, int column)
@@ -154,7 +144,7 @@ snowfall(int w, int h, int intensity, char *msg)
 	}
 
         for (int i = 0; i < intensity; i++) {
-		init_flake(&snow[i], scr->columns);
+		flake_init(&snow[i], scr->columns);
 	}
 
 	int melt_threshold = (scr->columns * scr->rows) / 7;
@@ -176,7 +166,7 @@ snowfall(int w, int h, int intensity, char *msg)
 				s->row += s->speed;
 				s->phase += s->freq;
 			} else {
-				init_flake(s, scr->columns);
+				flake_init(s, scr->columns);
 			}
 		}
 		if (rand() % melt_threshold == 0)

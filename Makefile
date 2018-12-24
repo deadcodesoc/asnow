@@ -3,7 +3,7 @@ CFLAGS  = -Wall -O2
 LD      = cc
 LDFLAGS =
 LIBS    = -lm
-OBJS    = asnow.o frame.o
+OBJS    = asnow.o flake.o frame.o
 
 .c.o:
 	$(CC) -c $(CFLAGS) -o $*.o $<
@@ -23,6 +23,8 @@ asnow.man: asnow.6
 	preconv $+ | nroff -man > $@
 	
 asnow.o: asnow.c asnow.h stamp.h
+frame.o: frame.c frame.h
+flake.o: flake.c flake.h
 
 $(OBJS): Makefile
 
