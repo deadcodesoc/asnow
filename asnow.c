@@ -227,7 +227,9 @@ snowfall(int w, int h, int intensity, char *msg)
 	fill_frame(bg,  BLANK);
 	fill_frame(fg,  BLANK);
 
-	for (int i=0; i < 3; i++) {
+	int ntrees = (scr->columns * scr->rows) / 500;
+
+	for (int i=0; i < ntrees; i++) {
 		int col = rand() % (bg->columns-strlen(stamp_small_tree[0]));
 		int row = rand() % (bg->rows-NELEMS(stamp_small_tree));
 		stamp_on_frame(bg, col, row, stamp_small_tree, strlen(stamp_small_tree[0]), NELEMS(stamp_small_tree));
