@@ -1,5 +1,7 @@
+VERSION = 0.1
+
 CC      = cc
-CFLAGS  = -Wall -O2
+CFLAGS  = -Wall -O2 -DVERSION=\"$(VERSION)\"
 LD      = cc
 LDFLAGS =
 LIBS    = -lm

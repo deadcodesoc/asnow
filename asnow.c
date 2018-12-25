@@ -17,9 +17,11 @@
 #include <sys/time.h>
 #include <time.h>
 #include <math.h>
+#include <getopt.h>
 #include <errno.h>
 #include "stamp.h"
 
+extern int optind;
 
 char *MeltMap[]  = {". ", "+.", "*+", "Xx", "x."};
 
@@ -188,11 +190,47 @@ snowfall(int w, int h, int intensity, char *msg)
 	return -1;
 }
 
+static void usage(const char *cmd)
+{
+	printf("Usage: %s [options] [message]\n", cmd);
+	printf("Available options:\n"
+"    -i --intensity num   Set the snowfall intensity (default 5)\n"
+"    -h --help            Display a summary of the command line options\n"
+"    -v --version         Print version information and exit\n"
+	);
+}
+
+static const struct option lopt[] = {
+	{ "help",               0, 0, 'h' },
+	{ "intensity",          1, 0, 'i' },
+	{ "version",            0, 0, 'v' },
+	{ NULL,                 0, 0, 0   }
+};
+
 int
 main(int argc, char *argv[])
 {
 	struct winsize ws;
 	int intensity = 5;	/* The number of simultaneous snowflakes */
+	int optidx = 0;
+	int o;
+
+#define OPTIONS "hi:v"
+	while ((o = getopt_long(argc, argv, OPTIONS, lopt, &optidx)) != -1) {
+		switch (o) {
+		case 'i':
+			intensity = strtoul(optarg, NULL, 0);
+			break;
+		case 'v':
+			printf("asnow " VERSION "\n");
+			exit(EXIT_SUCCESS);
+		case 'h':
+			usage(argv[0]);
+			exit(EXIT_SUCCESS);
+		default:
+			exit(EXIT_FAILURE);
+		}
+	}
 
 	srand(time(NULL));
 
@@ -201,7 +239,25 @@ main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	char *msg = argc > 1 ? argv[1] : NULL;
+	/* Build optional message */
+	int msglen = 0;
+	char *msg;
+	for (int i = optind; i < argc; i++) {
+		msglen += strlen(argv[i]) + 1;
+	}
+	if ((msg = (char *)malloc(msglen)) == NULL) {
+		perror(argv[0]);
+		exit(EXIT_FAILURE);
+	}
+	*msg = 0;
+	if (optind < argc) {
+		strncat(msg, argv[optind], msglen);
+		for (int i = optind + 1; i < argc; i++) {
+			strncat(msg, " ", msglen);
+			strncat(msg, argv[i], msglen);
+		}
+	}
+
 	if (snowfall(ws.ws_col, ws.ws_row, intensity, msg) < 0) {
 		fprintf(stderr, "no snow forecast today.\n");
 		exit(EXIT_FAILURE);
