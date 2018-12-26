@@ -5,7 +5,7 @@ CFLAGS  = -Wall -O2 -DVERSION=\"$(VERSION)\"
 LD      = cc
 LDFLAGS =
 LIBS    = -lm
-OBJS    = asnow.o flake.o frame.o
+OBJS    = asnow.o flake.o frame.o line.o
 
 .c.o:
 	$(CC) -c $(CFLAGS) -o $*.o $<
