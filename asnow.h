@@ -21,6 +21,6 @@ int        flake_is_blocked(Frame *frm, Snowflake *snow, int column);
 int        flake_is_blocker(Frame *frm, Snowflake *snow);
 void       melt_flakes(Frame *frm);
 useconds_t now(void);
-int        snowfall(int w, int h, int intensity, char *msg);
+int        snowfall(int w, int h, float frame_rate, int intensity, char *msg);
 
 #endif  /* ASNOW_H_ */

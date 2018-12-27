@@ -104,12 +104,11 @@ now(void)
 }
 
 int
-snowfall(int w, int h, int intensity, char *msg)
+snowfall(int w, int h, float frame_rate, int intensity, char *msg)
 {
 	Frame *scr, *buf, *bg, *fg;
 	useconds_t start;
 	useconds_t elapsed;
-	float frame_rate = 8.0;
 	Snow *snow;
 
 	if ((scr = new_frame(w, h)) == NULL) {
@@ -195,6 +194,7 @@ static void usage(const char *cmd)
 	printf("Usage: %s [options] [message]\n", cmd);
 	printf("Available options:\n"
 "    -i --intensity num   Set the snowfall intensity (default 5)\n"
+"    -f --frame-rate num  Set the frame rate (default 8.0)\n"
 "    -h --help            Display a summary of the command line options\n"
 "    -v --version         Print version information and exit\n"
 	);
@@ -203,6 +203,7 @@ static void usage(const char *cmd)
 static const struct option lopt[] = {
 	{ "help",               0, 0, 'h' },
 	{ "intensity",          1, 0, 'i' },
+	{ "frame-rate",         1, 0, 'f' },
 	{ "version",            0, 0, 'v' },
 	{ NULL,                 0, 0, 0   }
 };
@@ -212,14 +213,18 @@ main(int argc, char *argv[])
 {
 	struct winsize ws;
 	int intensity = 5;	/* The number of simultaneous snowflakes */
+	int frame_rate = 8.0;
 	int optidx = 0;
 	int o;
 
-#define OPTIONS "hi:v"
+#define OPTIONS "hi:f:v"
 	while ((o = getopt_long(argc, argv, OPTIONS, lopt, &optidx)) != -1) {
 		switch (o) {
 		case 'i':
 			intensity = strtoul(optarg, NULL, 0);
+			break;
+		case 'f':
+			frame_rate = atof(optarg);
 			break;
 		case 'v':
 			printf("asnow " VERSION "\n");
@@ -258,7 +263,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (snowfall(ws.ws_col, ws.ws_row, intensity, msg) < 0) {
+	if (snowfall(ws.ws_col, ws.ws_row, frame_rate, intensity, msg) < 0) {
 		fprintf(stderr, "no snow forecast today.\n");
 		exit(EXIT_FAILURE);
 	}
