@@ -34,17 +34,24 @@ new_frame(int columns, int rows)
 	return NULL;
 }
 
-void
+int
 put_on_frame(Frame *frm, int col, int row, char ch)
 {
-	size_t pos = row * frm->columns + col;
+	int pos = row * frm->columns + col;
+	if (pos < 0 || pos > frm->size) {
+		return -1;
+	}
 	frm->buffer[pos] = ch;
+	return ch;
 }
 
 int
 get_from_frame(Frame *frm, int col, int row)
 {
-	size_t pos = row * frm->columns + col;
+	int pos = row * frm->columns + col;
+	if (pos < 0 || pos > frm->size) {
+		return -1;
+	}
 	return frm->buffer[pos];
 }
 
@@ -54,21 +61,30 @@ fill_frame(Frame *frm, char ch)
 	memset(frm->buffer, ch, frm->size);
 }
 
-void
+int
 text_on_frame(Frame *frm, int col, int row, char *s)
 {
-	size_t pos = row * frm->columns + col;
-	memcpy(frm->buffer+pos, s, strlen(s));
+	int pos = row * frm->columns + col;
+	if (pos < 0 || pos > frm->size) {
+		return -1;
+	}
+	size_t len = MIN(strlen(s),frm->size-pos);
+	memcpy(frm->buffer+pos, s, len);
+	return len;
 }
 
-void
+int
 stamp_on_frame(Frame *frm, int col, int row, char *stamp[], int cols, int rows)
 {
-	size_t pos = row * frm->columns + col;
+	int pos = row * frm->columns + col;
+	if (pos < 0 || pos > frm->size) {
+		return -1;
+	}
 	for (int i = 0; i < rows && i+row < frm->rows; pos += frm->columns, i++) {
 		size_t len = MIN(cols,frm->columns-col);
 		memcpy(frm->buffer+pos, stamp[i], len);
 	}
+	return 0;
 }
 
 void
