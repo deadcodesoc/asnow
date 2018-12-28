@@ -104,7 +104,7 @@ now(void)
 }
 
 int
-snowfall(int w, int h, float frame_rate, int intensity, char *msg)
+snowfall(int w, int h, float frame_rate, int intensity, float temperature, char *msg)
 {
 	Frame *scr, *buf, *bg, *fg;
 	useconds_t start;
@@ -144,7 +144,7 @@ snowfall(int w, int h, float frame_rate, int intensity, char *msg)
 		text_on_frame(bg, (w - strlen(msg)) / 2, h / 2, msg);
 	}
 
-	int melt_threshold = (scr->columns * scr->rows) / 7;
+	int melt_threshold = (int)(-1.0f * temperature * (scr->columns * scr->rows) / 70);
 
 	for (;;) {
 		start = now();
@@ -193,14 +193,18 @@ static void usage(const char *cmd)
 {
 	printf("Usage: %s [options] [message]\n", cmd);
 	printf("Available options:\n"
-"    -i --intensity num   Set the snowfall intensity (default 5)\n"
+"    -C --celsius temp    Set the temperature in celsius\n"
+"    -F --fahrenheit temp Set the temperature in fahrenheit\n"
 "    -f --frame-rate num  Set the frame rate (default 8.0)\n"
 "    -h --help            Display a summary of the command line options\n"
+"    -i --intensity num   Set the snowfall intensity (default 5)\n"
+"    -K --kelvin temp     Set the temperature in kelvin\n"
 "    -v --version         Print version information and exit\n"
 	);
 }
 
 static const struct option lopt[] = {
+	{ "celsius",            1, 0, 'C' },
 	{ "help",               0, 0, 'h' },
 	{ "intensity",          1, 0, 'i' },
 	{ "frame-rate",         1, 0, 'f' },
@@ -213,19 +217,31 @@ main(int argc, char *argv[])
 {
 	struct winsize ws;
 	int intensity = 5;	/* The number of simultaneous snowflakes */
+	float temperature = -10.0;
 	int frame_rate = 8.0;
 	int optidx = 0;
 	int o;
 
-#define OPTIONS "hi:f:v"
+#define OPTIONS "C:F:f:hi:K:v"
 	while ((o = getopt_long(argc, argv, OPTIONS, lopt, &optidx)) != -1) {
 		switch (o) {
+		case 'C':
+			temperature = atof(optarg);
+			break;
 		case 'i':
 			intensity = strtoul(optarg, NULL, 0);
 			break;
+		case 'F': {
+			float tf = atof(optarg);
+			temperature = 5.0f * (tf - 32.0f) / 9.0f;
+			break; }
 		case 'f':
 			frame_rate = atof(optarg);
 			break;
+		case 'K': {
+			float tk = atof(optarg);
+			temperature = tk - 273.15f;
+			break; }
 		case 'v':
 			printf("asnow " VERSION "\n");
 			exit(EXIT_SUCCESS);
@@ -235,6 +251,11 @@ main(int argc, char *argv[])
 		default:
 			exit(EXIT_FAILURE);
 		}
+	}
+
+	if (temperature > -1.0f) {
+		temperature = -1.0f;
+		intensity = 0;
 	}
 
 	srand(time(NULL));
@@ -263,7 +284,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (snowfall(ws.ws_col, ws.ws_row, frame_rate, intensity, msg) < 0) {
+	if (snowfall(ws.ws_col, ws.ws_row, frame_rate, intensity, temperature, msg) < 0) {
 		fprintf(stderr, "no snow forecast today.\n");
 		exit(EXIT_FAILURE);
 	}
