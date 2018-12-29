@@ -193,8 +193,8 @@ static void usage(const char *cmd)
 {
 	printf("Usage: %s [options] [message]\n", cmd);
 	printf("Available options:\n"
-"    -C --celsius temp    Set the temperature in celsius\n"
-"    -F --fahrenheit temp Set the temperature in fahrenheit\n"
+"    -C --celsius temp    Set the temperature in degrees Celsius\n"
+"    -F --fahrenheit temp Set the temperature in degrees Fahrenheit\n"
 "    -f --frame-rate num  Set the frame rate (default 8.0)\n"
 "    -h --help            Display a summary of the command line options\n"
 "    -i --intensity num   Set the snowfall intensity (default 5)\n"
