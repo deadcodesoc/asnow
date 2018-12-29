@@ -27,6 +27,8 @@ asnow.man: asnow.6
 asnow.o: asnow.c asnow.h stamp.h
 frame.o: frame.c frame.h
 flake.o: flake.c flake.h
+line.o: line.c frame.h
+circle.o: circle.c frame.h
 
 $(OBJS): Makefile
 
