@@ -197,7 +197,7 @@ static void usage(const char *cmd)
 "    -F --fahrenheit temp Set the temperature in degrees Fahrenheit\n"
 "    -f --frame-rate num  Set the frame rate (default 8.0)\n"
 "    -h --help            Display a summary of the command line options\n"
-"    -i --intensity num   Set the snowfall intensity (default 5)\n"
+"    -i --intensity num   Set the snowfall intensity\n"
 "    -K --kelvin temp     Set the temperature in kelvin\n"
 "    -v --version         Print version information and exit\n"
 	);
@@ -216,7 +216,7 @@ int
 main(int argc, char *argv[])
 {
 	struct winsize ws;
-	int intensity = 5;	/* The number of simultaneous snowflakes */
+	int intensity = -1;	/* The number of simultaneous snowflakes */
 	float temperature = -10.0;
 	int frame_rate = 8.0;
 	int optidx = 0;
@@ -263,6 +263,10 @@ main(int argc, char *argv[])
 	if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) < 0) {
 		perror(argv[0]);
 		exit(EXIT_FAILURE);
+	}
+
+	if (intensity < 0) {
+		intensity = ws.ws_col / 10;
 	}
 
 	/* Build optional message */
