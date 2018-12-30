@@ -19,6 +19,7 @@
 #include <math.h>
 #include <getopt.h>
 #include <errno.h>
+#include <signal.h>
 #include "stamp.h"
 
 extern int optind;
@@ -103,6 +104,8 @@ now(void)
 	return tval.tv_sec * ONE_SECOND + tval.tv_usec;
 }
 
+static volatile int resize = 0;
+
 int
 snowfall(int w, int h, float frame_rate, int intensity, float temperature, char *msg)
 {
@@ -110,6 +113,7 @@ snowfall(int w, int h, float frame_rate, int intensity, float temperature, char 
 	useconds_t start;
 	useconds_t elapsed;
 	Snow *snow;
+	int ret = -1;
 
 	if ((scr = new_frame(w, h)) == NULL) {
 		goto err;
@@ -126,6 +130,8 @@ snowfall(int w, int h, float frame_rate, int intensity, float temperature, char 
 	if ((snow = snow_start(intensity, scr->columns)) == NULL) {
 		goto err5;
 	}
+
+	ret = 0;
 
 	fill_frame(scr, BLANK);
 	fill_frame(buf, BLANK);
@@ -146,7 +152,7 @@ snowfall(int w, int h, float frame_rate, int intensity, float temperature, char 
 
 	int melt_threshold = (int)(-1.0f * temperature * (scr->columns * scr->rows) / 70);
 
-	for (;;) {
+	while (resize == 0) {
 		start = now();
 		copy_frame(buf, fg);
 		for (int i = 0; i < intensity; i++) {
@@ -175,7 +181,6 @@ snowfall(int w, int h, float frame_rate, int intensity, float temperature, char 
 		elapsed = now() - start;
 		usleep((ONE_SECOND-elapsed)/frame_rate);
 	}
-	return 0;
 
  err5:
 	free(fg);
@@ -186,7 +191,18 @@ snowfall(int w, int h, float frame_rate, int intensity, float temperature, char 
  err2:
 	free(scr);
  err:
-	return -1;
+	return ret;
+}
+
+void
+resize_handler(int sig)
+{
+	resize = 1;
+}
+
+void cleanup()
+{
+	signal(SIGWINCH, SIG_DFL);
 }
 
 static void usage(const char *cmd)
@@ -216,7 +232,7 @@ int
 main(int argc, char *argv[])
 {
 	struct winsize ws;
-	int intensity = -1;	/* The number of simultaneous snowflakes */
+	int intensity, opt_intensity = 0;	/* The number of simultaneous snowflakes */
 	float temperature = -10.0;
 	int frame_rate = 8.0;
 	int optidx = 0;
@@ -229,7 +245,7 @@ main(int argc, char *argv[])
 			temperature = atof(optarg);
 			break;
 		case 'i':
-			intensity = strtoul(optarg, NULL, 0);
+			opt_intensity = strtoul(optarg, NULL, 0);
 			break;
 		case 'F': {
 			float tf = atof(optarg);
@@ -260,15 +276,6 @@ main(int argc, char *argv[])
 
 	srand(time(NULL));
 
-	if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) < 0) {
-		perror(argv[0]);
-		exit(EXIT_FAILURE);
-	}
-
-	if (intensity < 0) {
-		intensity = ws.ws_col / 10;
-	}
-
 	/* Build optional message */
 	int msglen = 0;
 	char *msg;
@@ -288,10 +295,26 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (snowfall(ws.ws_col, ws.ws_row, frame_rate, intensity, temperature, msg) < 0) {
+	signal(SIGWINCH, resize_handler);
+	atexit(cleanup);
+
+	int res;
+	do {
+		if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) < 0) {
+			perror(argv[0]);
+			exit(EXIT_FAILURE);
+		}
+
+		intensity = opt_intensity == 0 ? ws.ws_col / 10 : opt_intensity;
+
+		res = snowfall(ws.ws_col, ws.ws_row, frame_rate, intensity, temperature, msg);
+		resize = 0;
+	} while (res == 0);
+
+	if (res < 0) {
 		fprintf(stderr, "no snow forecast today.\n");
 		exit(EXIT_FAILURE);
 	}
 
-	fprintf(stderr, "you shouldn't see this message\n");
+	exit(EXIT_SUCCESS);
 }
