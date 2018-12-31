@@ -18,6 +18,11 @@ asnow: $(OBJS)
 asnow-static: $(OBJS)
 	$(LD) $(LDFLAGS) -static -o $@ $(OBJS) $(LIBS)
 
+install: asnow
+	mkdir -p $(DESTDIR)/bin $(DESTDIR)/share/man/man6
+	install -m 755 asnow $(DESTDIR)/bin
+	install -m 644 asnow.6 $(DESTDIR)/share/man/man6
+
 clean:
 	rm -f *~ *.o asnow
 
