@@ -320,6 +320,8 @@ main(int argc, char *argv[])
 
 	signal(SIGWINCH, resize_handler);
 	atexit(cleanup);
+	atexit(restore_term);
+	prepare_term();
 
 	int res;
 	do {
@@ -330,8 +332,6 @@ main(int argc, char *argv[])
 
 		intensity = opt_intensity == 0 ? ws.ws_col / 10 : opt_intensity;
 
-		atexit(restore_term);
-		prepare_term();
 		res = snowfall(ws.ws_col, ws.ws_row, frame_rate, intensity, temperature, msg);
 		resize = 0;
 	} while (res == 0);
