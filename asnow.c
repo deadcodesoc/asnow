@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <signal.h>
 #include "stamp.h"
+#include "io.h"
 
 extern int optind;
 
@@ -154,6 +155,28 @@ snowfall(int w, int h, float frame_rate, int intensity, float temperature, char 
 
 	while (resize == 0) {
 		start = now();
+		switch (getch()) {
+		case 'q':
+		case 'Q':
+			exit(EXIT_SUCCESS);
+			break;
+		case ',':
+		case '<':
+			if (intensity > 0) {
+				intensity--;
+			}
+			break;
+		case '.':
+		case '>':
+			intensity++;
+			break;
+		case 'm':
+		case 'M':
+			melt_flakes(bg);
+			break;
+		default:
+			break;
+		}
 		copy_frame(buf, fg);
 		for (int i = 0; i < intensity; i++) {
 			Snowflake *s = &snow->flake[i];
@@ -307,6 +330,8 @@ main(int argc, char *argv[])
 
 		intensity = opt_intensity == 0 ? ws.ws_col / 10 : opt_intensity;
 
+		atexit(restore_term);
+		prepare_term();
 		res = snowfall(ws.ws_col, ws.ws_row, frame_rate, intensity, temperature, msg);
 		resize = 0;
 	} while (res == 0);

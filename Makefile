@@ -5,7 +5,7 @@ CFLAGS  = -Wall -O2 -DVERSION=\"$(VERSION)\"
 LD      = cc
 LDFLAGS =
 LIBS    = -lm
-OBJS    = asnow.o flake.o frame.o line.o circle.o
+OBJS    = asnow.o flake.o frame.o line.o circle.o io.o
 
 .c.o:
 	$(CC) -c $(CFLAGS) -o $*.o $<
@@ -34,6 +34,7 @@ frame.o: frame.c frame.h
 flake.o: flake.c flake.h
 line.o: line.c frame.h
 circle.o: circle.c frame.h
+io.o: io.c io.h
 
 $(OBJS): Makefile
 

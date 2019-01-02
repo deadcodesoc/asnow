@@ -2,8 +2,8 @@
 - Atmospheric features
   - Wind (with speed and direction)
 
-- Interactive commands
-  - Use '<' and '>' to control the snowfall intensity
+- Interactive commands -- in progress
+  - Use '<' and '>' to control the snowfall intensity -- DONE!
   - Control temperature (affects melt rate)
   - Show "info" in the corner of the screen
     - Temperature
