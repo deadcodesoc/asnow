@@ -156,6 +156,7 @@ snowfall(int w, int h, float frame_rate, int intensity, float temperature, char 
 	while (resize == 0) {
 		start = now();
 		switch (getch()) {
+		case 27:
 		case 'q':
 		case 'Q':
 			exit(EXIT_SUCCESS);
