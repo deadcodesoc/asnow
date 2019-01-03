@@ -169,7 +169,9 @@ snowfall(int w, int h, float frame_rate, int intensity, float temperature, char 
 			break;
 		case '.':
 		case '>':
-			intensity++;
+			if (intensity < MAX_SNOW) {
+				intensity++;
+			}
 			break;
 		case 'm':
 		case 'M':

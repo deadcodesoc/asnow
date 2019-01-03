@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#define MAX_SNOW 20		/* Max simultaneous flakes */
+#define MAX_SNOW 100		/* Max simultaneous flakes */
 
 typedef struct {
 	char	shape;
