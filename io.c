@@ -31,7 +31,9 @@ getch()
 	FD_SET(0, &fds);
 	int nfds = select(1, &fds, NULL, NULL, &tv);
 	if (nfds == 1) {
-		read(0, &buf, 1);
+		if (read(0, &buf, 1) != 1) {
+			return -1;
+		}
 		return buf[0];
 	}
 	return -1;
