@@ -1,7 +1,7 @@
 VERSION = 0.1
 
 CC      = cc
-CFLAGS  = -std=c99 -Wall -O2 -DVERSION=\"$(VERSION)\"
+CFLAGS  = -std=c99 -Wall -O2 -DVERSION=\"$(VERSION)\" -U__STRICT_ANSI__
 LD      = cc
 LDFLAGS =
 LIBS    = -lm
