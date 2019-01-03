@@ -45,5 +45,5 @@
 - Code layout
   - Move terminal handling to a separate module
   - Add regression tests
-  - Add travis integration
+  - Add travis integration -- DONE!
 
