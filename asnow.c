@@ -323,8 +323,8 @@ main(int argc, char *argv[])
 
 	signal(SIGWINCH, resize_handler);
 	atexit(cleanup);
-	atexit(restore_term);
 	prepare_term();
+	atexit(restore_term);
 
 	int res;
 	do {
