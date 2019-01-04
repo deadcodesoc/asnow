@@ -286,12 +286,12 @@ main(int argc, char *argv[])
 			break; }
 		case 'v':
 			printf("asnow " VERSION "\n");
-			exit(EXIT_SUCCESS);
+			return EXIT_SUCCESS;
 		case 'h':
 			usage(argv[0]);
-			exit(EXIT_SUCCESS);
+			return EXIT_SUCCESS;
 		default:
-			exit(EXIT_FAILURE);
+			return EXIT_FAILURE;
 		}
 	}
 
@@ -310,7 +310,7 @@ main(int argc, char *argv[])
 	}
 	if ((msg = (char *)malloc(msglen)) == NULL) {
 		perror(argv[0]);
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 	*msg = 0;
 	if (optind < argc) {
@@ -330,7 +330,7 @@ main(int argc, char *argv[])
 	do {
 		if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) < 0) {
 			perror(argv[0]);
-			exit(EXIT_FAILURE);
+			return EXIT_FAILURE;
 		}
 
 		intensity = opt_intensity == 0 ? ws.ws_col / 10 : opt_intensity;
@@ -341,8 +341,8 @@ main(int argc, char *argv[])
 
 	if (res < 0) {
 		fprintf(stderr, "no snow forecast today.\n");
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
-	exit(EXIT_SUCCESS);
+	return EXIT_SUCCESS;
 }
